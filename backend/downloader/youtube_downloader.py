@@ -86,7 +86,7 @@ class YouTubeDownloader:
             
             # Enhanced options to fix 403 errors
             'http_headers': {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                 'Accept-Language': 'en-us,en;q=0.5',
                 'Sec-Fetch-Mode': 'navigate',
@@ -97,7 +97,6 @@ class YouTubeDownloader:
                     'player_skip': ['webpage', 'configs'],
                 }
             },
-            'nocheckcertificate': True,
             'geo_bypass': True,
             'socket_timeout': 30,
         }
@@ -133,11 +132,11 @@ class YouTubeDownloader:
             # Provide specific guidance for 403 errors
             if '403' in error_str or 'Forbidden' in error_str:
                 logger.error("HTTP 403 Forbidden - YouTube may be blocking requests.")
-                logger.error("Troubleshooting steps:")
-                logger.error("1. Update yt-dlp: pip install -U yt-dlp")
-                logger.error("2. If issue persists, you may need to provide cookies from your browser.")
-                logger.error("3. Export cookies using a browser extension like 'Get cookies.txt'")
-                logger.error("4. Configure the cookie file path in config.yaml")
+                logger.info("Troubleshooting steps:\n"
+                           "  1. Update yt-dlp: pip install -U yt-dlp\n"
+                           "  2. If issue persists, you may need to provide cookies from your browser.\n"
+                           "  3. Export cookies using a browser extension like 'Get cookies.txt'\n"
+                           "  4. Configure the cookie file path in config.yaml")
             
             self.downloads[download_id]['status'] = 'error'
             self.downloads[download_id]['error'] = error_str

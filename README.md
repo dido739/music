@@ -321,8 +321,6 @@ If you encounter **HTTP 403 Forbidden** errors when downloading from YouTube:
 - Multiple player client support (Android + Web)
 - Configurable timeout and geo-bypass options
 
-### Other download issues
-
 ### Downloads failing
 - Ensure ffmpeg is installed and in PATH
 - Check internet connection
