@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, send_file, send_from_directory
+from flask import Blueprint, jsonify, request, send_file, send_from_directory, g
 from backend.database.models import Track, Playlist, PlaylistTrack, Settings
 from sqlalchemy import or_, func
 import os
@@ -8,9 +8,9 @@ logger = logging.getLogger(__name__)
 
 api = Blueprint('api', __name__)
 
-def init_api(app, db_session, scanner, youtube_dl, spotify_dl, config):
+def init_api(app, get_session, scanner, youtube_dl, spotify_dl, config):
     """Initialize API with dependencies"""
-    api.db_session = db_session
+    api.get_session = get_session
     api.scanner = scanner
     api.youtube_dl = youtube_dl
     api.spotify_dl = spotify_dl
@@ -18,11 +18,17 @@ def init_api(app, db_session, scanner, youtube_dl, spotify_dl, config):
     
     app.register_blueprint(api, url_prefix='/api')
 
+def get_db():
+    """Helper to get current db session"""
+    return g.db_session
+
 # Library endpoints
 @api.route('/tracks', methods=['GET'])
 def get_tracks():
     """Get all tracks with optional filtering and pagination"""
     try:
+        db_session = get_db()
+        db_session = get_db()
         page = int(request.args.get('page', 1))
         per_page = int(request.args.get('per_page', 50))
         search = request.args.get('search', '')
@@ -33,7 +39,7 @@ def get_tracks():
         sort_order = request.args.get('sort_order', 'asc')
         
         # Build query
-        query = api.db_session.query(Track)
+        query = db_session.query(Track)
         
         # Apply filters
         if search:
@@ -84,7 +90,8 @@ def get_tracks():
 def get_track(track_id):
     """Get a specific track"""
     try:
-        track = api.db_session.query(Track).get(track_id)
+        db_session = get_db()
+        track = db_session.query(Track).get(track_id)
         if not track:
             return jsonify({'error': 'Track not found'}), 404
         
@@ -98,46 +105,49 @@ def get_track(track_id):
 def play_track(track_id):
     """Mark track as played"""
     try:
+        db_session = get_db()
         from datetime import datetime
         
-        track = api.db_session.query(Track).get(track_id)
+        track = db_session.query(Track).get(track_id)
         if not track:
             return jsonify({'error': 'Track not found'}), 404
         
         track.play_count = (track.play_count or 0) + 1
         track.last_played = datetime.utcnow()
-        api.db_session.commit()
+        db_session.commit()
         
         return jsonify(track.to_dict())
     
     except Exception as e:
         logger.error(f"Error updating play count: {str(e)}")
-        api.db_session.rollback()
+        db_session.rollback()
         return jsonify({'error': str(e)}), 500
 
 @api.route('/tracks/<int:track_id>/favorite', methods=['POST'])
 def toggle_favorite(track_id):
     """Toggle track favorite status"""
     try:
-        track = api.db_session.query(Track).get(track_id)
+        db_session = get_db()
+        track = db_session.query(Track).get(track_id)
         if not track:
             return jsonify({'error': 'Track not found'}), 404
         
         track.favorite = not track.favorite
-        api.db_session.commit()
+        db_session.commit()
         
         return jsonify(track.to_dict())
     
     except Exception as e:
         logger.error(f"Error toggling favorite: {str(e)}")
-        api.db_session.rollback()
+        db_session.rollback()
         return jsonify({'error': str(e)}), 500
 
 @api.route('/tracks/<int:track_id>/stream', methods=['GET'])
 def stream_track(track_id):
     """Stream a track"""
     try:
-        track = api.db_session.query(Track).get(track_id)
+        db_session = get_db()
+        track = db_session.query(Track).get(track_id)
         if not track:
             return jsonify({'error': 'Track not found'}), 404
         
@@ -155,7 +165,8 @@ def stream_track(track_id):
 def get_playlists():
     """Get all playlists"""
     try:
-        playlists = api.db_session.query(Playlist).all()
+        db_session = get_db()
+        playlists = db_session.query(Playlist).all()
         return jsonify([playlist.to_dict() for playlist in playlists])
     
     except Exception as e:
@@ -166,6 +177,7 @@ def get_playlists():
 def create_playlist():
     """Create a new playlist"""
     try:
+        db_session = get_db()
         data = request.get_json()
         
         playlist = Playlist(
@@ -173,21 +185,22 @@ def create_playlist():
             description=data.get('description', '')
         )
         
-        api.db_session.add(playlist)
-        api.db_session.commit()
+        db_session.add(playlist)
+        db_session.commit()
         
         return jsonify(playlist.to_dict()), 201
     
     except Exception as e:
         logger.error(f"Error creating playlist: {str(e)}")
-        api.db_session.rollback()
+        db_session.rollback()
         return jsonify({'error': str(e)}), 500
 
 @api.route('/playlists/<int:playlist_id>', methods=['GET'])
 def get_playlist(playlist_id):
     """Get a specific playlist with tracks"""
     try:
-        playlist = api.db_session.query(Playlist).get(playlist_id)
+        db_session = get_db()
+        playlist = db_session.query(Playlist).get(playlist_id)
         if not playlist:
             return jsonify({'error': 'Playlist not found'}), 404
         
@@ -210,7 +223,8 @@ def get_playlist(playlist_id):
 def update_playlist(playlist_id):
     """Update a playlist"""
     try:
-        playlist = api.db_session.query(Playlist).get(playlist_id)
+        db_session = get_db()
+        playlist = db_session.query(Playlist).get(playlist_id)
         if not playlist:
             return jsonify({'error': 'Playlist not found'}), 404
         
@@ -221,50 +235,52 @@ def update_playlist(playlist_id):
         if 'description' in data:
             playlist.description = data['description']
         
-        api.db_session.commit()
+        db_session.commit()
         
         return jsonify(playlist.to_dict())
     
     except Exception as e:
         logger.error(f"Error updating playlist: {str(e)}")
-        api.db_session.rollback()
+        db_session.rollback()
         return jsonify({'error': str(e)}), 500
 
 @api.route('/playlists/<int:playlist_id>', methods=['DELETE'])
 def delete_playlist(playlist_id):
     """Delete a playlist"""
     try:
-        playlist = api.db_session.query(Playlist).get(playlist_id)
+        db_session = get_db()
+        playlist = db_session.query(Playlist).get(playlist_id)
         if not playlist:
             return jsonify({'error': 'Playlist not found'}), 404
         
-        api.db_session.delete(playlist)
-        api.db_session.commit()
+        db_session.delete(playlist)
+        db_session.commit()
         
         return '', 204
     
     except Exception as e:
         logger.error(f"Error deleting playlist: {str(e)}")
-        api.db_session.rollback()
+        db_session.rollback()
         return jsonify({'error': str(e)}), 500
 
 @api.route('/playlists/<int:playlist_id>/tracks', methods=['POST'])
 def add_track_to_playlist(playlist_id):
     """Add a track to playlist"""
     try:
-        playlist = api.db_session.query(Playlist).get(playlist_id)
+        db_session = get_db()
+        playlist = db_session.query(Playlist).get(playlist_id)
         if not playlist:
             return jsonify({'error': 'Playlist not found'}), 404
         
         data = request.get_json()
         track_id = data.get('track_id')
         
-        track = api.db_session.query(Track).get(track_id)
+        track = db_session.query(Track).get(track_id)
         if not track:
             return jsonify({'error': 'Track not found'}), 404
         
         # Get next position
-        max_position = api.db_session.query(func.max(PlaylistTrack.position)).filter_by(playlist_id=playlist_id).scalar() or 0
+        max_position = db_session.query(func.max(PlaylistTrack.position)).filter_by(playlist_id=playlist_id).scalar() or 0
         
         playlist_track = PlaylistTrack(
             playlist_id=playlist_id,
@@ -272,21 +288,22 @@ def add_track_to_playlist(playlist_id):
             position=max_position + 1
         )
         
-        api.db_session.add(playlist_track)
-        api.db_session.commit()
+        db_session.add(playlist_track)
+        db_session.commit()
         
         return jsonify({'success': True}), 201
     
     except Exception as e:
         logger.error(f"Error adding track to playlist: {str(e)}")
-        api.db_session.rollback()
+        db_session.rollback()
         return jsonify({'error': str(e)}), 500
 
 @api.route('/playlists/<int:playlist_id>/tracks/<int:track_id>', methods=['DELETE'])
 def remove_track_from_playlist(playlist_id, track_id):
     """Remove a track from playlist"""
     try:
-        playlist_track = api.db_session.query(PlaylistTrack).filter_by(
+        db_session = get_db()
+        playlist_track = db_session.query(PlaylistTrack).filter_by(
             playlist_id=playlist_id,
             track_id=track_id
         ).first()
@@ -294,14 +311,14 @@ def remove_track_from_playlist(playlist_id, track_id):
         if not playlist_track:
             return jsonify({'error': 'Track not in playlist'}), 404
         
-        api.db_session.delete(playlist_track)
-        api.db_session.commit()
+        db_session.delete(playlist_track)
+        db_session.commit()
         
         return '', 204
     
     except Exception as e:
         logger.error(f"Error removing track from playlist: {str(e)}")
-        api.db_session.rollback()
+        db_session.rollback()
         return jsonify({'error': str(e)}), 500
 
 # Scanner endpoints
@@ -309,6 +326,7 @@ def remove_track_from_playlist(playlist_id, track_id):
 def start_scan():
     """Start scanning music directories"""
     try:
+        db_session = get_db()
         data = request.get_json() or {}
         directory = data.get('directory')
         
@@ -343,6 +361,7 @@ def start_scan():
 def get_scan_progress():
     """Get scan progress"""
     try:
+        db_session = get_db()
         return jsonify(api.scanner.get_progress())
     
     except Exception as e:
@@ -354,6 +373,7 @@ def get_scan_progress():
 def download_youtube():
     """Download from YouTube"""
     try:
+        db_session = get_db()
         data = request.get_json()
         url = data.get('url')
         
@@ -379,6 +399,7 @@ def download_youtube():
 def download_spotify():
     """Download from Spotify"""
     try:
+        db_session = get_db()
         data = request.get_json()
         url = data.get('url')
         
@@ -401,6 +422,7 @@ def download_spotify():
 def get_downloads():
     """Get all downloads"""
     try:
+        db_session = get_db()
         youtube_downloads = api.youtube_dl.get_all_downloads()
         spotify_downloads = api.spotify_dl.get_all_downloads()
         
@@ -418,6 +440,7 @@ def get_downloads():
 def get_config():
     """Get configuration"""
     try:
+        db_session = get_db()
         return jsonify(api.config)
     
     except Exception as e:
@@ -428,6 +451,7 @@ def get_config():
 def add_directory():
     """Add a music directory"""
     try:
+        db_session = get_db()
         data = request.get_json()
         directory = data.get('directory')
         
@@ -455,6 +479,7 @@ def add_directory():
 def remove_directory():
     """Remove a music directory"""
     try:
+        db_session = get_db()
         data = request.get_json()
         directory = data.get('directory')
         
@@ -480,12 +505,13 @@ def remove_directory():
 def search():
     """Search across all fields"""
     try:
+        db_session = get_db()
         query_str = request.args.get('q', '')
         
         if not query_str:
             return jsonify({'tracks': []})
         
-        tracks = api.db_session.query(Track).filter(
+        tracks = db_session.query(Track).filter(
             or_(
                 Track.title.ilike(f'%{query_str}%'),
                 Track.artist.ilike(f'%{query_str}%'),
@@ -507,13 +533,14 @@ def search():
 def get_stats():
     """Get library statistics"""
     try:
-        total_tracks = api.db_session.query(Track).count()
-        total_artists = api.db_session.query(Track.artist).distinct().count()
-        total_albums = api.db_session.query(Track.album).distinct().count()
-        total_playlists = api.db_session.query(Playlist).count()
+        db_session = get_db()
+        total_tracks = db_session.query(Track).count()
+        total_artists = db_session.query(Track.artist).distinct().count()
+        total_albums = db_session.query(Track.album).distinct().count()
+        total_playlists = db_session.query(Playlist).count()
         
         # Get total duration
-        total_duration = api.db_session.query(func.sum(Track.duration)).scalar() or 0
+        total_duration = db_session.query(func.sum(Track.duration)).scalar() or 0
         
         return jsonify({
             'total_tracks': total_tracks,

@@ -5,7 +5,6 @@ Music Server - A comprehensive web-based music server application
 
 from flask import Flask, send_from_directory
 from flask_cors import CORS
-from flask_socketio import SocketIO
 import yaml
 import logging
 import os
@@ -57,18 +56,32 @@ def create_app(config=None):
     # Enable CORS
     CORS(app)
     
-    # Initialize SocketIO
-    socketio = SocketIO(app, cors_allowed_origins="*")
-    
     # Initialize database
     db_path = config.get('database', {}).get('path', './music_server.db')
     Session = init_db(db_path)
-    db_session = Session()
     
     logger.info(f"Database initialized at {db_path}")
     
+    # Create a function to get db session per request
+    @app.before_request
+    def before_request():
+        from flask import g
+        g.db_session = Session()
+    
+    @app.teardown_appcontext
+    def shutdown_session(exception=None):
+        from flask import g
+        db_session = g.pop('db_session', None)
+        if db_session is not None:
+            db_session.close()
+    
+    # Get session from flask g
+    from flask import g
+    def get_session():
+        return g.db_session
+    
     # Initialize scanner
-    scanner = MusicScanner(db_session)
+    scanner = MusicScanner(None)  # We'll pass session in routes
     logger.info("Music scanner initialized")
     
     # Initialize downloaders
@@ -85,8 +98,11 @@ def create_app(config=None):
     
     logger.info("Downloaders initialized")
     
+    # Store session factory
+    app.Session = Session
+    
     # Initialize API
-    init_api(app, db_session, scanner, youtube_dl, spotify_dl, config)
+    init_api(app, get_session, scanner, youtube_dl, spotify_dl, config)
     logger.info("API initialized")
     
     # Serve frontend
@@ -98,18 +114,7 @@ def create_app(config=None):
     def static_files(path):
         return send_from_directory(app.static_folder, path)
     
-    # WebSocket events
-    @socketio.on('connect')
-    def handle_connect():
-        logger.info('Client connected')
-    
-    @socketio.on('disconnect')
-    def handle_disconnect():
-        logger.info('Client disconnected')
-    
-    app.socketio = socketio
-    
-    return app, socketio
+    return app
 
 def main():
     """Main entry point"""
@@ -117,7 +122,7 @@ def main():
     config = load_config()
     
     # Create app
-    app, socketio = create_app(config)
+    app = create_app(config)
     
     # Get server config
     server_config = config.get('server', {})
@@ -138,7 +143,7 @@ def main():
     logger.info(f"Open your browser at http://localhost:{port}")
     
     # Run server
-    socketio.run(app, host=host, port=port, debug=debug, allow_unsafe_werkzeug=True)
+    app.run(host=host, port=port, debug=debug)
 
 if __name__ == '__main__':
     main()

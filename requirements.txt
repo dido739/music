@@ -1,12 +1,9 @@
 Flask==3.0.0
 Flask-CORS==4.0.0
-Flask-SocketIO==5.3.5
 SQLAlchemy==2.0.23
 mutagen==1.47.0
 yt-dlp==2023.12.30
 spotdl==4.2.4
 watchdog==3.0.0
-python-socketio==5.10.0
-eventlet==0.33.3
 PyYAML==6.0.1
 requests==2.31.0
