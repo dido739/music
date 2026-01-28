@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Server</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-music"></i>
+                <h1>Music Server</h1>
+            </div>
+            
+            <nav class="nav">
+                <a href="#" class="nav-item active" data-page="library">
+                    <i class="fas fa-record-vinyl"></i>
+                    <span>Library</span>
+                </a>
+                <a href="#" class="nav-item" data-page="playlists">
+                    <i class="fas fa-list"></i>
+                    <span>Playlists</span>
+                </a>
+                <a href="#" class="nav-item" data-page="downloads">
+                    <i class="fas fa-download"></i>
+                    <span>Downloads</span>
+                </a>
+                <a href="#" class="nav-item" data-page="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <i class="fas fa-music"></i>
+                    <span id="total-tracks">0</span> tracks
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-user"></i>
+                    <span id="total-artists">0</span> artists
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-compact-disc"></i>
+                    <span id="total-albums">0</span> albums
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search-input" placeholder="Search music...">
+                </div>
+                
+                <div class="header-actions">
+                    <button class="btn btn-icon" id="theme-toggle" title="Toggle theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Library Page -->
+            <div class="page active" id="library-page">
+                <div class="page-header">
+                    <h2>Music Library</h2>
+                    <div class="page-actions">
+                        <select id="sort-by" class="select">
+                            <option value="title">Title</option>
+                            <option value="artist">Artist</option>
+                            <option value="album">Album</option>
+                            <option value="date_added">Date Added</option>
+                        </select>
+                        <button class="btn btn-primary" id="scan-btn">
+                            <i class="fas fa-sync"></i> Scan Library
+                        </button>
+                    </div>
+                </div>
+
+                <div class="tracks-container">
+                    <div class="tracks-grid" id="tracks-grid">
+                        <!-- Tracks will be loaded here -->
+                    </div>
+                </div>
+
+                <div class="pagination" id="pagination">
+                    <!-- Pagination controls will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Playlists Page -->
+            <div class="page" id="playlists-page">
+                <div class="page-header">
+                    <h2>Playlists</h2>
+                    <button class="btn btn-primary" id="create-playlist-btn">
+                        <i class="fas fa-plus"></i> Create Playlist
+                    </button>
+                </div>
+
+                <div class="playlists-grid" id="playlists-grid">
+                    <!-- Playlists will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Downloads Page -->
+            <div class="page" id="downloads-page">
+                <div class="page-header">
+                    <h2>Downloads</h2>
+                </div>
+
+                <div class="download-section">
+                    <h3>YouTube Download</h3>
+                    <div class="download-form">
+                        <input type="text" id="youtube-url" placeholder="Paste YouTube URL..." class="input">
+                        <select id="youtube-format" class="select">
+                            <option value="mp3">MP3</option>
+                            <option value="m4a">M4A</option>
+                            <option value="opus">OPUS</option>
+                        </select>
+                        <select id="youtube-quality" class="select">
+                            <option value="320">320 kbps</option>
+                            <option value="256">256 kbps</option>
+                            <option value="192">192 kbps</option>
+                            <option value="128">128 kbps</option>
+                        </select>
+                        <button class="btn btn-primary" id="youtube-download-btn">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </div>
+
+                <div class="download-section">
+                    <h3>Spotify Download</h3>
+                    <div class="download-form">
+                        <input type="text" id="spotify-url" placeholder="Paste Spotify URL..." class="input">
+                        <button class="btn btn-primary" id="spotify-download-btn">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </div>
+
+                <div class="download-history">
+                    <h3>Download History</h3>
+                    <div id="download-list">
+                        <!-- Download items will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div class="page" id="settings-page">
+                <div class="page-header">
+                    <h2>Settings</h2>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Music Directories</h3>
+                    <div id="directories-list">
+                        <!-- Directories will be loaded here -->
+                    </div>
+                    <div class="settings-form">
+                        <input type="text" id="new-directory" placeholder="Enter directory path..." class="input">
+                        <button class="btn btn-primary" id="add-directory-btn">
+                            <i class="fas fa-plus"></i> Add Directory
+                        </button>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Appearance</h3>
+                    <div class="setting-item">
+                        <label>Theme</label>
+                        <select id="theme-select" class="select">
+                            <option value="dark">Dark</option>
+                            <option value="light">Light</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Player -->
+    <div class="player" id="player">
+        <div class="player-track-info">
+            <img src="" alt="Album Art" class="player-album-art" id="player-album-art">
+            <div class="player-track-details">
+                <div class="player-track-title" id="player-title">No track playing</div>
+                <div class="player-track-artist" id="player-artist">-</div>
+            </div>
+        </div>
+
+        <div class="player-controls">
+            <button class="btn btn-icon" id="shuffle-btn" title="Shuffle">
+                <i class="fas fa-random"></i>
+            </button>
+            <button class="btn btn-icon" id="prev-btn" title="Previous">
+                <i class="fas fa-step-backward"></i>
+            </button>
+            <button class="btn btn-icon btn-play" id="play-pause-btn" title="Play">
+                <i class="fas fa-play"></i>
+            </button>
+            <button class="btn btn-icon" id="next-btn" title="Next">
+                <i class="fas fa-step-forward"></i>
+            </button>
+            <button class="btn btn-icon" id="repeat-btn" title="Repeat">
+                <i class="fas fa-redo"></i>
+            </button>
+        </div>
+
+        <div class="player-progress">
+            <span class="time" id="current-time">0:00</span>
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+                <input type="range" id="seek-bar" min="0" max="100" value="0" step="0.1">
+            </div>
+            <span class="time" id="duration-time">0:00</span>
+        </div>
+
+        <div class="player-volume">
+            <button class="btn btn-icon" id="volume-btn" title="Mute">
+                <i class="fas fa-volume-up"></i>
+            </button>
+            <input type="range" id="volume-slider" min="0" max="100" value="70" step="1">
+        </div>
+
+        <audio id="audio-player"></audio>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="playlist-modal">
+        <div class="modal-content">
+            <h3>Create Playlist</h3>
+            <input type="text" id="playlist-name" placeholder="Playlist name..." class="input">
+            <textarea id="playlist-description" placeholder="Description (optional)..." class="textarea"></textarea>
+            <div class="modal-actions">
+                <button class="btn" id="cancel-playlist-btn">Cancel</button>
+                <button class="btn btn-primary" id="save-playlist-btn">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+server:
+  host: 0.0.0.0
+  port: 5000
+  debug: false
+  
+music_directories:
+  - ./music
+
+downloads:
+  directory: ./downloads
+  youtube:
+    enabled: true
+    default_format: mp3
+    default_quality: 320
+  spotify:
+    enabled: true
+    
+database:
+  path: ./music_server.db
+  
+ui:
+  theme: dark
+  items_per_page: 50
