@@ -283,6 +283,44 @@ music-server/
 - Check that files are in supported formats (MP3, FLAC, WAV, OGG, M4A)
 - Click "Scan Library" to manually trigger a scan
 
+### YouTube Downloads - HTTP 403 Forbidden Error
+
+If you encounter **HTTP 403 Forbidden** errors when downloading from YouTube:
+
+1. **Update yt-dlp** (most common fix):
+   ```bash
+   pip install -U yt-dlp
+   ```
+   YouTube frequently changes their API, so keeping yt-dlp up to date is crucial.
+
+2. **Check the error logs**:
+   - The application provides detailed troubleshooting steps in the console/logs
+   - Look for specific error messages that indicate the issue
+
+3. **For age-restricted or region-locked content**:
+   - Export your browser cookies to a file using a browser extension like "Get cookies.txt"
+   - Save the cookies file (e.g., `cookies.txt`)
+   - Add the cookie file path to `config.yaml`:
+     ```yaml
+     downloads:
+       youtube:
+         cookiefile: /path/to/cookies.txt
+     ```
+
+4. **Try a different video** to confirm if the issue is specific to one video or all videos
+
+5. **Use a VPN** if the content is region-locked
+
+6. **Wait and retry**:
+   - The downloader includes automatic retry logic with exponential backoff
+   - Sometimes YouTube's rate limiting is temporary
+
+**Note**: The YouTube downloader has been enhanced with:
+- Automatic retry logic (up to 3 attempts)
+- Improved HTTP headers to avoid bot detection
+- Multiple player client support (Android + Web)
+- Configurable timeout and geo-bypass options
+
 ### Downloads failing
 - Ensure ffmpeg is installed and in PATH
 - Check internet connection

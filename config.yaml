@@ -12,6 +12,7 @@ downloads:
     enabled: true
     default_format: mp3
     default_quality: 320
+    # cookiefile: /path/to/cookies.txt  # Optional: path to browser cookies for age-restricted content
   spotify:
     enabled: true
     
