@@ -5,6 +5,9 @@ A comprehensive Python-based web music server application with a beautiful, mode
 ![Music Server](https://img.shields.io/badge/Python-3.10+-blue.svg)
 ![Flask](https://img.shields.io/badge/Flask-3.0-green.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Security](https://img.shields.io/badge/Security-Updated-success.svg)
+
+> **🔒 Security Notice**: This project uses updated dependencies with all known security vulnerabilities patched. See [SECURITY.md](SECURITY.md) for details.
 
 ## Features
 
