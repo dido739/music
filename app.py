@@ -91,7 +91,8 @@ def create_app(config=None):
     youtube_dl = YouTubeDownloader(
         download_dir=download_dir,
         default_format=youtube_config.get('default_format', 'mp3'),
-        default_quality=youtube_config.get('default_quality', 320)
+        default_quality=youtube_config.get('default_quality', 320),
+        cookiefile=youtube_config.get('cookiefile')
     )
     
     spotify_dl = SpotifyDownloader(download_dir=download_dir)
